@@ -1,0 +1,17 @@
+{
+  "name": "downloads-organizer",
+  "version": "1.0.0",
+  "description": "다운로드 폴더를 자동으로 정리해주는 데스크탑 앱",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "keywords": ["electron", "file-organizer", "downloads"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0"
+  },
+  "dependencies": {}
+}
