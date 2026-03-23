@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>영양소 추천 결과 - 건강지표 상세</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      background: #f4f5f7;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── 상단 헤더 ── */
+    .page-header {
+      background: #fff;
+      border-bottom: 1px solid #dde1e7;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .page-header h1 { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+    .page-header .badge {
+      background: #e8f4fd;
+      color: #2563eb;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* ── 3패널 레이아웃 ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr 320px;
+      height: calc(100vh - 45px);
+      overflow: hidden;
+    }
+
+    /* ── 왼쪽 패널 ── */
+    .left-panel {
+      background: #fff;
+      border-right: 1px solid #dde1e7;
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+    .panel-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 14px 14px 6px;
+      border-top: 1px solid #eef0f3;
+    }
+    .panel-section-title:first-child { border-top: none; }
+
+    /* 지표 목록 */
+    .indicator-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.15s;
+    }
+    .indicator-item:hover { background: #f8f9fc; }
+    .indicator-item.active {
+      background: #eff6ff;
+      border-left-color: #2563eb;
+    }
+    .indicator-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #374151;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .indicator-item.active .indicator-num { background: #2563eb; color: #fff; }
+    .indicator-info { flex: 1; min-width: 0; }
+    .indicator-name-en { font-size: 11px; font-weight: 600; color: #374151; }
+    .indicator-name-ko { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+    .indicator-summary-short {
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 3px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* 영양소 목록 */
+    .supplement-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .supplement-item:hover { background: #f8f9fc; }
+    .supplement-item.active { background: #f0fdf4; }
+    .supp-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .supplement-item.active .supp-num { background: #dcfce7; color: #16a34a; }
+    .supp-name { font-size: 11px; color: #374151; font-weight: 500; }
+
+    /* ── 중앙 패널 ── */
+    .center-panel {
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-heading {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #2563eb;
+      margin-bottom: 4px;
+    }
+    .section-heading span { color: #2563eb; }
+
+    /* 지표 카드 */
+    .indicator-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .card-title-group { flex: 1; }
+    .card-title-en { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .card-title-ko { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .card-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .badge-category { background: #dbeafe; color: #1d4ed8; }
+
+    .card-summary {
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      background: #f8f9fc;
+      border-left: 3px solid #2563eb;
+      border-radius: 0 4px 4px 0;
+      line-height: 1.5;
+    }
+    .card-description {
+      font-size: 12px;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+
+    /* 차트 플레이스홀더 */
+    .chart-placeholder {
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      margin: 12px 0 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .chart-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    }
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: #9ca3af;
+    }
+
+    /* ── 오른쪽 패널 ── */
+    .right-panel {
+      background: #fff;
+      border-left: 1px solid #dde1e7;
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+
+    .right-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a2e;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #eef0f3;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+    }
+
+    /* 영양소 상세 카드 */
+    .supplement-card {
+      border-bottom: 1px solid #f3f4f6;
+      padding: 12px 16px;
+    }
+    .supp-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .supp-card-name { font-size: 12px; font-weight: 700; color: #1a1a2e; }
+    .supp-card-badge {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      background: #f0fdf4;
+      color: #16a34a;
+      font-weight: 600;
+    }
+
+    .supp-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+    .supp-function-list {
+      list-style: none;
+      padding: 0;
+    }
+    .supp-function-list li {
+      font-size: 11px;
+      color: #374151;
+      padding: 2px 0;
+      padding-left: 12px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .supp-function-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #2563eb;
+    }
+
+    .supp-intake-box {
+      background: #eff6ff;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 11px;
+      color: #1d4ed8;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .supp-caution-list {
+      list-style: none;
+      padding: 0;
+    }
+    .supp-caution-list li {
+      font-size: 10px;
+      color: #92400e;
+      padding: 2px 0;
+      padding-left: 12px;
+      position: relative;
+      line-height: 1.4;
+    }
+    .supp-caution-list li::before {
+      content: "!";
+      position: absolute;
+      left: 0;
+      color: #f59e0b;
+      font-weight: 700;
+    }
+
+    /* 스크롤바 스타일 */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ── 상단 헤더 ── -->
+<header class="page-header">
+  <h1>영양소 추천 결과 — 건강지표 상세</h1>
+  <span class="badge">2025 영양소 추천 서비스</span>
+</header>
+
+<!-- ── 3패널 레이아웃 ── -->
+<div class="layout">
+
+  <!-- ────────── 왼쪽 패널 ────────── -->
+  <aside class="left-panel">
+    <div class="panel-section-title">심혈관 건강 지표</div>
+
+    <div id="indicatorList"></div>
+
+    <div class="panel-section-title">영양소 추천 목록</div>
+
+    <div id="supplementList"></div>
+  </aside>
+
+  <!-- ────────── 중앙 패널 ────────── -->
+  <main class="center-panel">
+    <div class="section-heading">심혈관 건강 <span>지표 상세</span></div>
+    <div id="indicatorCards"></div>
+  </main>
+
+  <!-- ────────── 오른쪽 패널 ────────── -->
+  <aside class="right-panel">
+    <div class="right-section-title">영양소 상세 정보</div>
+    <div id="supplementCards"></div>
+  </aside>
+
+</div>
+
+<script src="nutrition-data.js"></script>
+<script>
+  // ── 지표 목록 렌더링 ──
+  const indicatorList = document.getElementById('indicatorList');
+  INDICATORS.cardiovascular.items.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'indicator-item' + (i === 0 ? ' active' : '');
+    el.innerHTML = `
+      <div class="indicator-num">${i + 1}</div>
+      <div class="indicator-info">
+        <div class="indicator-name-en">${item.name}</div>
+        <div class="indicator-name-ko">${item.nameKo}</div>
+        <div class="indicator-summary-short">${item.summary}</div>
+      </div>
+    `;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.indicator-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+    });
+    indicatorList.appendChild(el);
+  });
+
+  // ── 지표 카드 렌더링 (중앙) ──
+  const indicatorCards = document.getElementById('indicatorCards');
+  const chartWidths = [72, 45, 60, 55, 38];
+  INDICATORS.cardiovascular.items.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'indicator-card';
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-title-en">${item.name} <span style="font-size:11px;font-weight:400;color:#6b7280;">(${item.nameKo})</span></div>
+        </div>
+        <span class="card-badge badge-category">심혈관 건강</span>
+      </div>
+      <div class="card-summary">${item.summary}</div>
+      <div class="card-description">${item.description}</div>
+      <div class="chart-placeholder">
+        <div class="chart-fill" style="width:${chartWidths[i]}%"></div>
+      </div>
+      <div class="chart-labels"><span>정상</span><span>주의</span><span>위험</span></div>
+    `;
+    indicatorCards.appendChild(card);
+  });
+
+  // ── 영양소 목록 렌더링 (왼쪽) ──
+  const supplementList = document.getElementById('supplementList');
+  SUPPLEMENTS.forEach((supp, i) => {
+    const el = document.createElement('div');
+    el.className = 'supplement-item' + (i === 0 ? ' active' : '');
+    el.innerHTML = `
+      <div class="supp-num">${i + 1}</div>
+      <div class="supp-name">${supp.name}</div>
+    `;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.supplement-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+    });
+    supplementList.appendChild(el);
+  });
+
+  // ── 영양소 상세 카드 렌더링 (오른쪽) ──
+  const supplementCards = document.getElementById('supplementCards');
+  SUPPLEMENTS.forEach((supp, i) => {
+    const card = document.createElement('div');
+    card.className = 'supplement-card';
+
+    const fnItems = supp.functions.map(f => `<li>${f}</li>`).join('');
+    const cautionItems = supp.cautions.length
+      ? `<div class="supp-section-label">섭취 시 주의사항</div>
+         <ul class="supp-caution-list">${supp.cautions.map(c => `<li>${c}</li>`).join('')}</ul>`
+      : '';
+
+    card.innerHTML = `
+      <div class="supp-card-header">
+        <div class="supp-card-name">${supp.name}</div>
+        <span class="supp-card-badge">추천</span>
+      </div>
+      <div class="supp-section-label">기능성 내용</div>
+      <ul class="supp-function-list">${fnItems}</ul>
+      <div class="supp-section-label">일일섭취량</div>
+      <div class="supp-intake-box">${supp.dailyIntake}</div>
+      ${cautionItems}
+    `;
+    supplementCards.appendChild(card);
+  });
+</script>
+</body>
+</html>
